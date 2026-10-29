@@ -23,7 +23,7 @@ description: "团建/周边游双平台文案技能。默认五版；先交付�
 
 执行默认五版之前（或生成指定版本时），按需读取以下**全部公开链接，旧范例只学写法，不借事实**：
 
-- 全部版本：[`real-golden-examples.md`](references/real-golden-examples.md)（黄金写法参考）、[`real-style-library-30.md`](references/real-style-library-30.md)（6大结构与30篇完整风格原文；仅做写法参考）。可以分段读取，但不得在未读的情况下宣称已参考。
+- 全部版本：[`real-golden-examples.md`](references/real-golden-examples.md)（黄金写法参考）、[`real-style-library-30.md`](references/real-style-library-30.md)（6大结构与30篇完整风格原文；仅做写法参考）。另外公开保留了[126篇原始语料快照](references/real-raw-corpus-126.txt)和[标题写法参考](references/title-style-guidance.md)，仅在本轮需要扩展参考时按主题查阅，不必每次读完整126篇。可以分段读取，但不得在未读的情况下宣称已参考。
 - 小红书3高密度种草版：**必须**读取[`high-density-template.md`](references/high-density-template.md)及[`real-example-high-density.md`](references/real-example-high-density.md)。
 - 小红书4高密度全要素版：**必须**读取[`full-element-template.md`](references/full-element-template.md)及[`real-example-full-element-tonglu.md`](references/real-example-full-element-tonglu.md)；多套互斥路线素材再读[`real-example-dual-itinerary-linan.md`](references/real-example-dual-itinerary-linan.md)。
 - 网页复制使用：[`quick-start-link-prompt.md`](references/quick-start-link-prompt.md)（含固定 `文案.txt` 交付说明）。
