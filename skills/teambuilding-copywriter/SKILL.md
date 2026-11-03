@@ -61,7 +61,7 @@ description: "团建/周边游双平台文案技能。默认五版；先交付�
 6. **分层加载参考，默认不扫描语料库**：每轮必须读取本 `SKILL.md`。默认五版只需再读取两个短模板：小红书3的[`high-density-template.md`](references/high-density-template.md)和小红书4的[`full-element-template.md`](references/full-element-template.md)，用以保持高密度质量。**不再强制每次读取黄金原稿、30篇风格库和126篇语料。**
 7. **按需升级到原稿**：用户要求项目排列更丰富时，按需读取[`activity-dense-layout-style-guide.md`](references/activity-dense-layout-style-guide.md)；当第3版写作密度不足时，再读[`real-example-high-density.md`](references/real-example-high-density.md)；第4版排程与模块不够丰富时，再读[`real-example-full-element-tonglu.md`](references/real-example-full-element-tonglu.md)；两条互斥完整路线时再读[`real-example-dual-itinerary-linan.md`](references/real-example-dual-itinerary-linan.md)。需要新的标题/风格时，再定向查[`real-golden-examples.md`](references/real-golden-examples.md)、[`real-style-library-30.md`](references/real-style-library-30.md)、[`title-style-guidance.md`](references/title-style-guidance.md)或[`real-raw-corpus-126.txt`](references/real-raw-corpus-126.txt)相关片段。**历史原稿只学结构，不借事实；不得宣称读取了实际未读的范例。**
 8. **抖音合规**：实际生成抖音稿时按本文件第六节执行，并在涉及旅游服务/资质风险时定点参考[`douyin-violation-cases.md`](references/douyin-violation-cases.md)；不能通过改写把实质商业招徕伪装成非经营性游记。
-9. **内部校验、一次交付**：校验事实、字数、标题、话题、3/4时间轴、风险措辞、独立/合并/TXT的一致性；能用确定性计数或比对处理的不要改成多轮推理。默认不展示中间研究/逐张图像识别步骤，不把验收规则反复复制给用户。
+9. **内部校验、一次交付**：先按2026-11-03硬质检扫描术语泄漏/PPT腔/营销承接/未经证实的服务配置；有Python与文件读写能力时，可运行[`scripts/qa_publish_text.py`](scripts/qa_publish_text.py)对最终MULTI/TXT进行确定性文本检查。否则也须人工逐版核验，不能因为工具不可用跳过。再验事实、字数、标题、话题、3/4时间轴、独立/合并/TXT一致性；能用确定性计数或比对处理的不要改成多轮推理。默认不展示中间研究/逐张图像识别步骤，不把验收规则反复复制给用户。
 
 参考文件不可用时只说明确实需要而未读到的文件，不为了读取非必需大语料中断生产。历史文件中的版本数、字数或旧交付规则与本版冲突时，以2026-11-03.1为准。
 
@@ -218,6 +218,6 @@ description: "团建/周边游双平台文案技能。默认五版；先交付�
 - 正文段落之间使用独立一行的 Unicode U+2800 字符 `⠀`；不使用 HTML 空格或 `<br>`。
 - 五版要有明确风格差异，不能互相换词冒充独立成稿。
 - 验收第3/4版的**项目可见度**：读者是否一眼看到足够多的真实项目名称、合理分类与密集排版；若多数篇幅只是解释、免责声明和空泛建议，则该版不通过。真实项目少时不许凭空增项。
-- 发布前逐版检查：事实依据、生产旁白、标题长度、发布字符数、标签数量、抖音禁词/方案腔、段间留白、两种格式内容一致性。
+- 发布前逐版检查：**先执行2026-11-03的内部术语/PPT腔/未证实服务与强CTA硬门**，再检查事实依据、生产旁白、标题长度、发布字符数、标签数量、抖音禁词/方案腔、段间留白、两种格式内容一致性。可用Python时运行 `python scripts/qa_publish_text.py 文案.txt`；返回非零意味着有文本错误必须重写。脚本中 `REVIEW_EVIDENCE` 属于需按本轮来源人工核实的预警，不代表机器已经验证事实或平台资质。
 - 任一版本未通过，先定点修订不合格项并重新核验；不得为了形式而重跑全部研究，不得声称已经通过未实际执行的检查。
 - 用户只需说“调用团建文案技能写文案”，默认就按本节五版＋双格式合同执行；不需要重复粘贴旧的三版提示词。若用户当轮明确指定其他数量或格式，以当轮明确要求为准。
