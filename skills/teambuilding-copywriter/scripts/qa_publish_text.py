@@ -42,9 +42,16 @@ BANNED_EXTERNAL_OR_BAIT = re.compile(
     r"(?:加微信|加微\b)|(?:留|留下)\s*(?:微信|电话|手机号))",
     re.IGNORECASE,
 )
+# The public closing line should sound human. An official tool/qualification check
+# happens outside copy; this text-only checker cannot verify the account's permissions.
 STRONG_CTA_ACTION = re.compile(
-    r"(?:官方|站内).{0,18}(?:咨询|服务入口|留资|客资)"
-    r"|(?:咨询|服务入口|留资|客资).{0,18}(?:官方|站内)"
+    r"(?:团建|年会|企业活动).{0,100}(?:聊聊|聊一聊|咨询|问问|说说|来聊|私信)"
+    r"|(?:聊聊|聊一聊|咨询|问问|说说|来聊|私信).{0,100}(?:团建|年会|企业活动)"
+)
+STIFF_CTA = re.compile(
+    r"本账号已开通的官方站内咨询入口|"
+    r"进一步沟通实际可提供的活动策划内容|"
+    r"本账号已开通.{0,30}(?:咨询入口|服务入口)"
 )
 
 EVIDENCE_REVIEW = re.compile(
@@ -78,8 +85,15 @@ def check(text: str) -> dict:
             errors.append("FAIL_STRONG_CTA: direct solicitation outside the qualified business variant")
         if BANNED_EXTERNAL_OR_BAIT.search(body):
             errors.append("FAIL_EXTERNAL_OR_BAIT_CTA: off-platform contact, comment code, or unsupported sales promise")
-        if is_commercial_cta and not STRONG_CTA_ACTION.search(body):
-            errors.append("FAIL_WEAK_OR_MISSING_OFFICIAL_CTA: strong edition needs an actual on-platform business CTA")
+        if is_commercial_cta:
+            # CTA should be in the last prose section before the hashtags.
+            prose = body.split("#", 1)[0]
+            closing = next((line.strip() for line in reversed(prose.splitlines())
+                            if line.strip() and line.strip() != "⠀"), "")
+            if not STRONG_CTA_ACTION.search(closing):
+                errors.append("FAIL_WEAK_STRONG_CTA: closing must ask a team-building lead to take one clear conversational action")
+            if STIFF_CTA.search(body):
+                errors.append("FAIL_STIFF_CTA: platform qualification/official-entry instructions leaked into public-facing copy")
         title = next((line.strip() for line in body.splitlines() if line.strip()), "")
         if len(title) > 20 and "小红书" in name:
             errors.append(f"FAIL_XHS_TITLE_LENGTH: {len(title)} code points")
