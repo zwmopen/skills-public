@@ -36,10 +36,10 @@ CTA = re.compile(
 # Manual business/industry permissions and actual tool availability must still be verified.
 COMMERCIAL_CTA_VERSION = "小红书｜强CTA转化版"
 BANNED_EXTERNAL_OR_BAIT = re.compile(
-    r"(?:微\\s*信|[Ww][Xx](?:号)?|加[Vv]|手机号|联系电话|二维码|扫码|"
-    r"免费\\s*get|【(?:团建\\s*[+＋]\\s*)?人数】\\s*(?:get|获取)|"
-    r"评论(?:区)?\\s*(?:扣|打|留)\\s*[1１]|全包执行|"
-    r"(?:加微信|加微\\b)|(?:留|留下)\\s*(?:微信|电话|手机号))",
+    r"(?:微\s*信|[Ww][Xx](?:号)?|加[Vv]|手机号|联系电话|二维码|扫码|"
+    r"免费\s*get|【(?:团建\s*[+＋]\s*)?人数】\s*(?:get|获取)|"
+    r"评论(?:区)?\s*(?:扣|打|留)\s*[1１]|全包执行|"
+    r"(?:加微信|加微\b)|(?:留|留下)\s*(?:微信|电话|手机号))",
     re.IGNORECASE,
 )
 STRONG_CTA_ACTION = re.compile(
