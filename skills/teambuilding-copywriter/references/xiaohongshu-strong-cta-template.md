@@ -18,6 +18,8 @@ CTA三要素：**团建需求（明确HR/行政/老板）＋简单动作（聊�
 
 **质检**：公文腔长CTA标`FAIL_STIFF_CTA`，重写；不以“强转化”之名制造虚假承诺、站外导流或不具资格的经营性旅游招徕。
 
+如需参考更多同事截图对比及不同场景的原创CTA短句，按需读取[`strong-cta-case-patterns.md`](strong-cta-case-patterns.md)；默认快速生产不强制读取。
+
 ---
 
 ## 定位
