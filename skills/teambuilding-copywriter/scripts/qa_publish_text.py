@@ -32,6 +32,21 @@ CTA = re.compile(
     r"(?:免费\s*get\s*(?:方案|策划|执行))|(?:1\s*[vV]\s*1\s*策划))",
     re.IGNORECASE,
 )
+# Commercial CTA edition is allowed to use an explicit *on-platform* service request.
+# Manual business/industry permissions and actual tool availability must still be verified.
+COMMERCIAL_CTA_VERSION = "小红书｜强CTA转化版"
+BANNED_EXTERNAL_OR_BAIT = re.compile(
+    r"(?:微\\s*信|[Ww][Xx](?:号)?|加[Vv]|手机号|联系电话|二维码|扫码|"
+    r"免费\\s*get|【(?:团建\\s*[+＋]\\s*)?人数】\\s*(?:get|获取)|"
+    r"评论(?:区)?\\s*(?:扣|打|留)\\s*[1１]|全包执行|"
+    r"(?:加微信|加微\\b)|(?:留|留下)\\s*(?:微信|电话|手机号))",
+    re.IGNORECASE,
+)
+STRONG_CTA_ACTION = re.compile(
+    r"(?:官方|站内).{0,18}(?:咨询|服务入口|留资|客资)"
+    r"|(?:咨询|服务入口|留资|客资).{0,18}(?:官方|站内)"
+)
+
 EVIDENCE_REVIEW = re.compile(
     r"(?:\d+\s*座(?:正规)?大巴|\d+(?:万|万元?)保额|"
     r"\d+\s*[-—–~至]\s*\d+\s*人(?:皆可定制|可定制|定制|可接)|"
@@ -58,12 +73,21 @@ def check(text: str) -> dict:
                 errors.append(f"FAIL_INTERNAL_TERM_LEAK: {token}")
         if BROCHURE_HEADING.search(body):
             errors.append("FAIL_BROCHURE_HEADING: tender/PPT style heading")
-        if CTA.search(body):
-            errors.append("FAIL_STRONG_CTA: direct solicitation in default publishing copy")
+        is_commercial_cta = name == COMMERCIAL_CTA_VERSION
+        if CTA.search(body) and not is_commercial_cta:
+            errors.append("FAIL_STRONG_CTA: direct solicitation outside the qualified business variant")
+        if BANNED_EXTERNAL_OR_BAIT.search(body):
+            errors.append("FAIL_EXTERNAL_OR_BAIT_CTA: off-platform contact, comment code, or unsupported sales promise")
+        if is_commercial_cta and not STRONG_CTA_ACTION.search(body):
+            errors.append("FAIL_WEAK_OR_MISSING_OFFICIAL_CTA: strong edition needs an actual on-platform business CTA")
         title = next((line.strip() for line in body.splitlines() if line.strip()), "")
         if len(title) > 20 and "小红书" in name:
             errors.append(f"FAIL_XHS_TITLE_LENGTH: {len(title)} code points")
         warnings = []
+        if is_commercial_cta:
+            warnings.append(
+                "REVIEW_BUSINESS_QUALIFICATION: confirm real industry permissions, disclosure and an enabled official on-platform consultation entry before publishing"
+            )
         if EVIDENCE_REVIEW.search(body):
             warnings.append(
                 "REVIEW_EVIDENCE: specific service, facilities, capacity or inclusion claims"
