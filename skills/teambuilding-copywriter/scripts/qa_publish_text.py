@@ -44,9 +44,14 @@ BANNED_EXTERNAL_OR_BAIT = re.compile(
 )
 # The public closing line should sound human. An official tool/qualification check
 # happens outside copy; this text-only checker cannot verify the account's permissions.
+# Only the fourth Xiaohongshu edition should ask for a direct private message.
+# Avoid generic sales prompts in other five versions.
 STRONG_CTA_ACTION = re.compile(
-    r"(?:团建|年会|企业活动).{0,100}(?:聊聊|聊一聊|咨询|问问|说说|来聊|私信)"
-    r"|(?:聊聊|聊一聊|咨询|问问|说说|来聊|私信).{0,100}(?:团建|年会|企业活动)"
+    r"(?:团建|年会|企业活动).{0,80}私信|私信.{0,80}(?:团建|年会|企业活动)"
+)
+NON_CONVERSION_SALES_HOOK = re.compile(
+    r"站内聊聊|聊聊人数|找我聊|问我就行|"
+    r"(?:团建|年会|公司活动).{0,24}(?:还没定|没头绪|想怎么安排).{0,40}(?:聊聊|找我|问我|咨询|帮你)"
 )
 STIFF_CTA = re.compile(
     r"本账号已开通的官方站内咨询入口|"
@@ -81,17 +86,19 @@ def check(text: str) -> dict:
         if BROCHURE_HEADING.search(body):
             errors.append("FAIL_BROCHURE_HEADING: tender/PPT style heading")
         is_commercial_cta = name == COMMERCIAL_CTA_VERSION
-        if CTA.search(body) and not is_commercial_cta:
-            errors.append("FAIL_STRONG_CTA: direct solicitation outside the qualified business variant")
+        # Only inspect prose, not hashtags, when checking the closing action.
+        prose = body.split("#", 1)[0]
+        closing = next((line.strip() for line in reversed(prose.splitlines())
+                        if line.strip() and line.strip() != "⠀"), "")
+        if not is_commercial_cta and (
+            CTA.search(body) or NON_CONVERSION_SALES_HOOK.search(closing)
+        ):
+            errors.append("FAIL_CTA_LEAK_OTHER_VERSIONS: only the fourth Xiaohongshu version should contain a sales hook")
         if BANNED_EXTERNAL_OR_BAIT.search(body):
             errors.append("FAIL_EXTERNAL_OR_BAIT_CTA: off-platform contact, comment code, or unsupported sales promise")
         if is_commercial_cta:
-            # CTA should be in the last prose section before the hashtags.
-            prose = body.split("#", 1)[0]
-            closing = next((line.strip() for line in reversed(prose.splitlines())
-                            if line.strip() and line.strip() != "⠀"), "")
-            if not STRONG_CTA_ACTION.search(closing):
-                errors.append("FAIL_WEAK_STRONG_CTA: closing must ask a team-building lead to take one clear conversational action")
+            if "私信" not in closing or not STRONG_CTA_ACTION.search(closing):
+                errors.append("FAIL_NOT_DIRECT_DM_CTA: ending must explicitly ask for a private message about team building")
             if STIFF_CTA.search(body):
                 errors.append("FAIL_STIFF_CTA: platform qualification/official-entry instructions leaked into public-facing copy")
         title = next((line.strip() for line in body.splitlines() if line.strip()), "")
@@ -100,7 +107,7 @@ def check(text: str) -> dict:
         warnings = []
         if is_commercial_cta:
             warnings.append(
-                "REVIEW_BUSINESS_QUALIFICATION: confirm real industry permissions, disclosure and an enabled official on-platform consultation entry before publishing"
+                "REVIEW_BUSINESS_QUALIFICATION: confirm industry permissions, commercial disclosure and a usable in-platform DM workflow before publishing"
             )
         if EVIDENCE_REVIEW.search(body):
             warnings.append(
