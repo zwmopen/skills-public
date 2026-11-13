@@ -42,12 +42,12 @@ BANNED_EXTERNAL_OR_BAIT = re.compile(
     r"(?:加微信|加微\b)|(?:留|留下)\s*(?:微信|电话|手机号))",
     re.IGNORECASE,
 )
-# The public closing line should sound human. An official tool/qualification check
-# happens outside copy; this text-only checker cannot verify the account's permissions.
-# Only the fourth Xiaohongshu edition should ask for a direct private message.
-# Avoid generic sales prompts in other five versions.
-STRONG_CTA_ACTION = re.compile(
-    r"(?:团建|年会|企业活动).{0,80}私信|私信.{0,80}(?:团建|年会|企业活动)"
+# Manual business qualification and the actual permitted contact route require human review.
+# Strong conversion is a semantic writing goal, NOT a mandatory DM keyword.
+# Reject the disfavored formula without requiring a replacement buzzword.
+FIXED_DM_CLICHE = re.compile(
+    r"直接\\s*私信\\s*我|"
+    r"本账号已开通的官方站内咨询入口"
 )
 NON_CONVERSION_SALES_HOOK = re.compile(
     r"站内聊聊|聊聊人数|找我聊|问我就行|"
@@ -97,17 +97,25 @@ def check(text: str) -> dict:
         if BANNED_EXTERNAL_OR_BAIT.search(body):
             errors.append("FAIL_EXTERNAL_OR_BAIT_CTA: off-platform contact, comment code, or unsupported sales promise")
         if is_commercial_cta:
-            if "私信" not in closing or not STRONG_CTA_ACTION.search(closing):
-                errors.append("FAIL_NOT_DIRECT_DM_CTA: ending must explicitly ask for a private message about team building")
+            if FIXED_DM_CLICHE.search(body):
+                errors.append("FAIL_TEMPLATE_CTA: no hardcoded direct-DM formula or platform-style CTA")
             if STIFF_CTA.search(body):
                 errors.append("FAIL_STIFF_CTA: platform qualification/official-entry instructions leaked into public-facing copy")
+            if not closing or closing == title:
+                warnings = ["REVIEW_CTA_CONTEXT: check whether the chosen ending provides a real and permitted next step"]
+            else:
+                warnings = []
         title = next((line.strip() for line in body.splitlines() if line.strip()), "")
         if len(title) > 20 and "小红书" in name:
             errors.append(f"FAIL_XHS_TITLE_LENGTH: {len(title)} code points")
-        warnings = []
+        if not is_commercial_cta:
+            warnings = []
         if is_commercial_cta:
             warnings.append(
-                "REVIEW_BUSINESS_QUALIFICATION: confirm industry permissions, commercial disclosure and a usable in-platform DM workflow before publishing"
+                "REVIEW_BUSINESS_QUALIFICATION: confirm industry permissions, commercial disclosure and permitted contact routes before publishing"
+            )
+            warnings.append(
+                "REVIEW_CTA_CONTEXT: manual review of context-specific CTA strength; no fixed DM keyword required"
             )
         if EVIDENCE_REVIEW.search(body):
             warnings.append(
