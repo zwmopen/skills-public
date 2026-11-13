@@ -46,7 +46,7 @@ BANNED_EXTERNAL_OR_BAIT = re.compile(
 # Strong conversion is a semantic writing goal, NOT a mandatory DM keyword.
 # Reject the disfavored formula without requiring a replacement buzzword.
 FIXED_DM_CLICHE = re.compile(
-    r"直接\\s*私信\\s*我|"
+    r"直接\s*私信\s*我|"
     r"本账号已开通的官方站内咨询入口"
 )
 NON_CONVERSION_SALES_HOOK = re.compile(
@@ -101,15 +101,11 @@ def check(text: str) -> dict:
                 errors.append("FAIL_TEMPLATE_CTA: no hardcoded direct-DM formula or platform-style CTA")
             if STIFF_CTA.search(body):
                 errors.append("FAIL_STIFF_CTA: platform qualification/official-entry instructions leaked into public-facing copy")
-            if not closing or closing == title:
-                warnings = ["REVIEW_CTA_CONTEXT: check whether the chosen ending provides a real and permitted next step"]
-            else:
-                warnings = []
+
         title = next((line.strip() for line in body.splitlines() if line.strip()), "")
         if len(title) > 20 and "小红书" in name:
             errors.append(f"FAIL_XHS_TITLE_LENGTH: {len(title)} code points")
-        if not is_commercial_cta:
-            warnings = []
+        warnings = []
         if is_commercial_cta:
             warnings.append(
                 "REVIEW_BUSINESS_QUALIFICATION: confirm industry permissions, commercial disclosure and permitted contact routes before publishing"
