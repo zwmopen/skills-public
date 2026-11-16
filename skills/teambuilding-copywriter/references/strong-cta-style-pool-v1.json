@@ -1,0 +1,106 @@
+{
+  "version": "2026-11-16.2",
+  "usage": "小红书第4篇强转化结构模板池；必须先从当前批次真实素材提取facts并做资格过滤。",
+  "fact_fields": {
+    "project_count": "当前批次不重复的真实项目数，整数",
+    "route_count": "当前批次不同具名路线条数，整数",
+    "has_two_complete_itineraries": "素材是否实际存在两条可行完整路线，布尔",
+    "has_two_day_itinerary": "素材是否提供两日主线，布尔",
+    "has_outdoor_and_rest": "素材是否同时支持活力户外和休闲内容，布尔",
+    "has_outdoor": "素材是否有户外玩法，布尔",
+    "has_food": "素材是否有具体餐饮，布尔",
+    "has_cultural_activity": "素材是否有明确文化景点/手作，布尔",
+    "has_seasonal_hook": "素材是否有真实且适合当前季节的时令特色，布尔"
+  },
+  "templates": [
+    {
+      "id": "XCTA-01",
+      "name": "百丈岭：反套路痛点与视觉主角",
+      "min_project_count": 1,
+      "requirements": {},
+      "read_details_from": "strong-cta-style-pool-v1.md"
+    },
+    {
+      "id": "XCTA-02",
+      "name": "龙坞：玩法菜单与选择理由",
+      "min_project_count": 5,
+      "requirements": {},
+      "read_details_from": "strong-cta-style-pool-v1.md"
+    },
+    {
+      "id": "XCTA-03",
+      "name": "青山湖：具名项目池与A/B完整线路",
+      "min_project_count": 4,
+      "requirements": {
+        "has_two_complete_itineraries": true
+      },
+      "read_details_from": "strong-cta-style-pool-v1.md"
+    },
+    {
+      "id": "XCTA-04",
+      "name": "江浙沪古道：多条真实线路合集",
+      "min_project_count": 5,
+      "requirements": {
+        "min_route_count": 5
+      },
+      "read_details_from": "strong-cta-style-pool-v1.md"
+    },
+    {
+      "id": "XCTA-05",
+      "name": "桐庐：两日行程与活力休闲双池",
+      "min_project_count": 5,
+      "requirements": {
+        "has_two_day_itinerary": true,
+        "has_outdoor_and_rest": true
+      },
+      "read_details_from": "strong-cta-style-pool-v1.md"
+    },
+    {
+      "id": "XCTA-06",
+      "name": "四明山：打工人痛点与农趣餐食",
+      "min_project_count": 4,
+      "requirements": {
+        "has_outdoor": true,
+        "has_food": true
+      },
+      "read_details_from": "strong-cta-style-pool-v1.md"
+    },
+    {
+      "id": "XCTA-07",
+      "name": "黄山宏村：文化慢游地标与手作",
+      "min_project_count": 3,
+      "requirements": {
+        "has_cultural_activity": true
+      },
+      "read_details_from": "strong-cta-style-pool-v1.md"
+    },
+    {
+      "id": "XCTA-08",
+      "name": "莫干山：动感A和休闲B互斥线路",
+      "min_project_count": 3,
+      "requirements": {
+        "has_outdoor_and_rest": true,
+        "has_two_day_itinerary": true
+      },
+      "read_details_from": "strong-cta-style-pool-v1.md"
+    },
+    {
+      "id": "XCTA-09",
+      "name": "千岛湖：2天主线与项目分类清单",
+      "min_project_count": 4,
+      "requirements": {
+        "has_two_day_itinerary": true
+      },
+      "read_details_from": "strong-cta-style-pool-v1.md"
+    },
+    {
+      "id": "XCTA-10",
+      "name": "阳澄湖：季节特色与体验主线",
+      "min_project_count": 3,
+      "requirements": {
+        "has_seasonal_hook": true
+      },
+      "read_details_from": "strong-cta-style-pool-v1.md"
+    }
+  ]
+}
