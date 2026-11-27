@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import unicodedata
 from pathlib import Path
 
 MARKED_VERSION = re.compile(
@@ -81,6 +82,56 @@ def editorial_patterns(prose: str) -> dict:
     return {key: len(rx.findall(prose)) for key, rx in AI_FILLER.items() if rx.search(prose)}
 
 
+# Only explicit line-leading time entries; alternatives and day headings reset the sequence.
+TIME_ENTRY = re.compile(r"^\s*(?:[^\w\s]{1,5}\s*)?(\d{1,2})[:：](\d{2})(?:\s*[-—–~至]\s*(\d{1,2})[:：](\d{2}))?\s*[｜|、:：\-—]?\s*(.*)$")
+DAY_OR_BRANCH = re.compile(r"^\s*[^\w\s]*(?:day\s*[1-9]|d[1-9]|第[一二三四五六七八九\d]+天|次日|翌日|[ab]\s*(?:线|方案)|方案[一二三四\d])", re.I)
+
+def itinerary_checks(prose):
+    errors, warnings = [], []
+    prev = None
+    for raw in prose.splitlines():
+        line = unicodedata.normalize("NFKC", raw).replace("❶", "1").replace("❷", "2").replace("❸", "3").replace("❹", "4")
+        if DAY_OR_BRANCH.match(line):
+            prev = None
+            continue
+        m = TIME_ENTRY.match(line)
+        if not m:
+            continue
+        h, minute = int(m[1]), int(m[2])
+        if h > 23 or minute > 59:
+            errors.append("FAIL_INVALID_CLOCK: " + raw)
+            continue
+        start = h * 60 + minute
+        end = None
+        if m[3] is not None:
+            eh, em = int(m[3]), int(m[4])
+            if eh > 23 or em > 59:
+                errors.append("FAIL_INVALID_CLOCK: " + raw)
+                continue
+            end = eh * 60 + em
+            if end <= start:
+                errors.append("FAIL_REVERSED_TIME_RANGE: " + raw)
+        desc = m[5]
+        if prev:
+            old_start, old_end, old_desc, old_raw = prev
+            gap = start - old_start
+            if gap <= 0:
+                errors.append("FAIL_TIME_ORDER: " + old_raw + " -> " + raw)
+            elif old_end is not None and start < old_end:
+                errors.append("FAIL_TIME_OVERLAP: " + old_raw + " -> " + raw)
+            elif gap < 15:
+                warnings.append("REVIEW_SHORT_INTERVAL: " + old_raw + " -> " + raw)
+            if gap > 0:
+                if re.search(r"午餐|晚餐|正餐|午宴|晚宴|聚餐|吃饭|鱼头宴|烧烤BBQ", old_desc) and gap < 45:
+                    warnings.append("REVIEW_MEAL_DURATION: " + old_raw + " -> " + raw)
+                if re.search(r"徒步|爬山|登山", old_desc) and gap < 60:
+                    warnings.append("REVIEW_HIKING_DURATION: " + old_raw + " -> " + raw)
+                if re.search(r"睡觉|就寝|入睡", desc) and 360 <= start < 1080 and not re.search(r"午睡|午休", desc):
+                    warnings.append("REVIEW_DAYTIME_SLEEP: " + raw)
+        prev = (start, end, desc, raw)
+    return errors, warnings
+
+
 def extract(content: str) -> list[tuple[str, str]]:
     blocks = MARKED_VERSION.findall(content)
     if blocks:
@@ -108,7 +159,7 @@ def check(text: str) -> dict:
         if not is_commercial_cta and (
             CTA.search(body) or NON_CONVERSION_SALES_HOOK.search(closing)
         ):
-            errors.append("FAIL_CTA_LEAK_OTHER_VERSIONS: only the fourth Xiaohongshu version should contain a sales hook")
+            errors.append("FAIL_CTA_LEAK_OTHER_VERSIONS: default five drafts must not contain unapproved sales hooks")
         if BANNED_EXTERNAL_OR_BAIT.search(body):
             errors.append("FAIL_EXTERNAL_OR_BAIT_CTA: off-platform contact, comment code, or unsupported sales promise")
         if is_commercial_cta:
@@ -120,7 +171,9 @@ def check(text: str) -> dict:
         title = next((line.strip() for line in body.splitlines() if line.strip()), "")
         if len(title) > 20 and "小红书" in name:
             errors.append(f"FAIL_XHS_TITLE_LENGTH: {len(title)} code points")
-        warnings = []
+        time_errors, time_warnings = itinerary_checks(prose)
+        errors.extend(time_errors)
+        warnings = time_warnings
         patterns = editorial_patterns(prose)
         pattern_records.append(patterns)
         for key, count in patterns.items():
@@ -153,7 +206,7 @@ def check(text: str) -> dict:
         "accepted": all(x["accepted"] for x in records),
         "repeated_pattern_families": repeated,
         "versions": records,
-        "scope": "textual term/style checks only; not fact or platform validation",
+        "scope": "textual style and itinerary screening only; manual geography, duration, fact and platform validation required",
     }
 
 
