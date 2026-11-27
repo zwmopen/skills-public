@@ -8,6 +8,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
+import hashlib
 import secrets
 import tempfile
 from pathlib import Path
@@ -34,28 +36,54 @@ def read_example(entry, root):
         raise ValueError("Stale locator or missing original: " + entry["id"])
     return body
 
-def assignment(pools, recent):
+def normalized_fingerprint(body):
+    normalized = re.sub(r"[\W_]+", "", body, flags=re.UNICODE).casefold()
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+def prose_count(body):
+    # Approved raw files contain one title,正文, then hashtags; metadata lives in index.
+    lines = [line.strip() for line in body.splitlines() if line.strip() and line.strip() != "⠀"]
+    prose = [line for line in lines[1:] if not line.startswith("#")]
+    return len(re.sub(r"\s+", "", "\n".join(prose)).replace("⠀", ""))
+
+def approved(entry, platform):
+    q = entry.get("quality_review", {})
+    return (entry.get("status") == "approved"
+            and q.get("decision") == "pass"
+            and bool(q.get("reviewer")) and bool(q.get("reason"))
+            and entry.get("format_quality") == "linebreaks_present"
+            and entry.get("platform_hint") == platform
+            and bool(entry.get("style_cluster"))
+            and bool(entry.get("source_group"))
+            and entry.get("rights_status") in ("authorized", "owned", "permitted_private_reference"))
+
+def assignment(pools, recent, entries, fingerprints):
     rng = secrets.SystemRandom()
     order = sorted(pools, key=lambda slot: len(pools[slot]))
-    def search(i, used, result, exclude_recent):
+    def search(i, used, result, exclude_recent, strict_source):
         if i == len(order):
             return dict(result)
         slot = order[i]
-        options = [v for v in pools[slot] if v not in used and (not exclude_recent or v not in recent)]
+        options = [v for v in pools[slot]
+                   if v not in used and (not exclude_recent or v not in recent)
+                   and all(fingerprints[v] != fingerprints[u] for u in used)
+                   and all(entries[v]["style_cluster"] != entries[u]["style_cluster"] for u in used)
+                   and (not strict_source or all(entries[v]["source_group"] != entries[u]["source_group"] for u in used))]
         rng.shuffle(options)
         # Preserve randomness within groups while preferring fresh candidates.
         options.sort(key=lambda v: v in recent)
         for v in options:
             result[slot] = v
-            found = search(i + 1, used | {v}, result, exclude_recent)
+            found = search(i + 1, used | {v}, result, exclude_recent, strict_source)
             if found is not None:
                 return found
             result.pop(slot, None)
         return None
-    fresh = search(0, set(), {}, True)
-    if fresh is not None:
-        return fresh, False
-    return search(0, set(), {}, False), True
+    for strict_source, exclude_recent in ((True, True), (True, False), (False, True), (False, False)):
+        chosen = search(0, set(), {}, exclude_recent, strict_source)
+        if chosen is not None:
+            return chosen, not exclude_recent, not strict_source
+    return None, False, False
 
 def atomic_json(path, data):
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -91,6 +119,7 @@ def main():
         p.error("Expected 1 to 6 slots")
     pools = {}
     bodies = {}
+    fingerprints = {}
     errors = []
     for slot in slots:
         sid, platform = slot["id"], slot["platform"]
@@ -99,18 +128,17 @@ def main():
         ids = slot["eligible_ids"]
         if not isinstance(ids, list):
             p.error("eligible_ids must be an array")
-        allowed = {platform}
-        if platform == "xiaohongshu":
-            allowed.add("unknown_xhs_like")
         pool = []
         for eid in dict.fromkeys(ids):
             e = by_id.get(eid)
-            if not e or e.get("status") != "candidate" or e.get("platform_hint") not in allowed:
+            if not e or not approved(e, platform):
                 continue
             try:
                 if eid not in bodies:
                     bodies[eid] = read_example(e, args.root)
-                pool.append(eid)
+                    fingerprints[eid] = normalized_fingerprint(bodies[eid])
+                if prose_count(bodies[eid]) > 0:
+                    pool.append(eid)
             except (OSError, ValueError, KeyError) as exc:
                 errors.append({"id": eid, "error": str(exc)})
         pools[sid] = pool
@@ -118,14 +146,14 @@ def main():
     if not isinstance(history, list) or not all(isinstance(x, str) for x in history):
         p.error("Invalid history; repair rather than silently discard")
     recent = set(history[-args.avoid_recent:]) if args.avoid_recent else set()
-    chosen, relaxed = assignment(pools, recent)
+    chosen, relaxed, source_relaxed = assignment(pools, recent, by_id, fingerprints)
     if chosen is None:
-        print(json.dumps({"status":"insufficient_distinct_examples","candidate_counts":{k:len(v) for k,v in pools.items()},"errors":errors}, ensure_ascii=False))
+        print(json.dumps({"status":"insufficient_approved_diverse_examples","candidate_counts":{k:len(v) for k,v in pools.items()},"errors":errors}, ensure_ascii=False))
         return 2
-    selected = [{"slot_id":s["id"],"example_id":chosen[s["id"]],"source":by_id[chosen[s["id"]]]["source"],"start_line":by_id[chosen[s["id"]]]["start_line"],"end_line":by_id[chosen[s["id"]]]["end_line"],"format_quality":by_id[chosen[s["id"]]]["format_quality"],"raw_text":bodies[chosen[s["id"]]]} for s in slots]
+    selected = [{"slot_id":s["id"],"example_id":chosen[s["id"]],"source":by_id[chosen[s["id"]]]["source"],"start_line":by_id[chosen[s["id"]]]["start_line"],"end_line":by_id[chosen[s["id"]]]["end_line"],"format_quality":by_id[chosen[s["id"]]]["format_quality"],"style_cluster":by_id[chosen[s["id"]]]["style_cluster"],"source_group":by_id[chosen[s["id"]]]["source_group"],"reference_prose_chars":prose_count(bodies[chosen[s["id"]]]),"raw_text":bodies[chosen[s["id"]]]} for s in slots]
     if not args.dry_run:
         atomic_json(args.history, (history + [e["example_id"] for e in selected])[-300:])
-    print(json.dumps({"status":"ok","history_updated":not args.dry_run,"recent_exclusion_relaxed":relaxed,"reused_recent_ids":[e["example_id"] for e in selected if e["example_id"] in recent],"selected":selected,"errors":errors}, ensure_ascii=False, indent=2))
+    print(json.dumps({"status":"ok","history_updated":not args.dry_run,"recent_exclusion_relaxed":relaxed,"source_diversity_relaxed":source_relaxed,"reused_recent_ids":[e["example_id"] for e in selected if e["example_id"] in recent],"selected":selected,"errors":errors}, ensure_ascii=False, indent=2))
     return 0
 
 if __name__ == "__main__":
