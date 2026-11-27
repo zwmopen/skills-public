@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "platform": "douyin",
+  "description": "抖音原文案例索引。当前为历史黄金成稿，非已验证同行抖音原帖。",
+  "entries": [
+    {
+      "id": "G002",
+      "source": "references/real-golden-examples.md",
+      "start_line": 89,
+      "end_line": 136,
+      "title": "莫干山秋天这样玩🍂两天完全不重复",
+      "platform_hint": "douyin",
+      "kind": "historical_finished_example",
+      "format_quality": "linebreaks_present",
+      "status": "candidate",
+      "topic_hint": "范例 1｜莫干山2天1夜（分天动线 + 时刻穿插 × 单场地抖音去团建化）",
+      "source_claim": "historical writing example; not verified current facts or conversion data"
+    },
+    {
+      "id": "G004",
+      "source": "references/real-golden-examples.md",
+      "start_line": 217,
+      "end_line": 267,
+      "title": "江浙沪秋季团建🍂9座城按秋色直接选",
+      "platform_hint": "douyin",
+      "kind": "historical_finished_example",
+      "format_quality": "linebreaks_present",
+      "status": "candidate",
+      "topic_hint": "范例 2｜江浙沪9城赏秋大合集（多目的地合集 × 抖音团建SEO流量帖例外）",
+      "source_claim": "historical writing example; not verified current facts or conversion data"
+    },
+    {
+      "id": "G006",
+      "source": "references/real-golden-examples.md",
+      "start_line": 369,
+      "end_line": 411,
+      "title": "上海一日团建去哪玩📍10个场地直接按喜好选",
+      "platform_hint": "douyin",
+      "kind": "historical_finished_example",
+      "format_quality": "linebreaks_present",
+      "status": "candidate",
+      "topic_hint": "范例 3｜上海一日10场地合集（多场地选型 × 按喜好分组）",
+      "source_claim": "historical writing example; not verified current facts or conversion data"
+    },
+    {
+      "id": "G008",
+      "source": "references/real-golden-examples.md",
+      "start_line": 489,
+      "end_line": 526,
+      "title": "临安大明山秋天这样走🍂别把山里排太满",
+      "platform_hint": "douyin",
+      "kind": "historical_finished_example",
+      "format_quality": "linebreaks_present",
+      "status": "candidate",
+      "topic_hint": "范例 4｜临安大明山秋日轻户外（半天/一天分档大纲 × 单场地慢节奏抖音）",
+      "source_claim": "historical writing example; not verified current facts or conversion data"
+    },
+    {
+      "id": "G010",
+      "source": "references/real-golden-examples.md",
+      "start_line": 607,
+      "end_line": 644,
+      "title": "杭州西湖秋天别只会暴走🍂这样玩舒服很多",
+      "platform_hint": "douyin",
+      "kind": "historical_finished_example",
+      "format_quality": "linebreaks_present",
+      "status": "candidate",
+      "topic_hint": "范例 5｜杭州西湖秋日按参与度选（红书大纲完整收藏版标杆 × 单场地抖音）",
+      "source_claim": "historical writing example; not verified current facts or conversion data"
+    },
+    {
+      "id": "G012",
+      "source": "references/real-golden-examples.md",
+      "start_line": 731,
+      "end_line": 774,
+      "title": "杭州径山秋天这样玩🍵一天都不会腻",
+      "platform_hint": "douyin",
+      "kind": "historical_finished_example",
+      "format_quality": "linebreaks_present",
+      "status": "candidate",
+      "topic_hint": "范例 6｜杭州径山一日（一日五段节奏拆解 + Emoji 提档标杆）",
+      "source_claim": "historical writing example; not verified current facts or conversion data"
+    },
+    {
+      "id": "G015",
+      "source": "references/real-golden-examples.md",
+      "start_line": 1003,
+      "end_line": 1027,
+      "title": "趣味运动会怎么选🎈这几个项目不用硬拼体力",
+      "platform_hint": "douyin",
+      "kind": "historical_finished_example",
+      "format_quality": "linebreaks_present",
+      "status": "candidate",
+      "topic_hint": "范例 9｜趣味运动会选型（活动模块拆解 + 容差机制与HR决策巅峰典范）",
+      "source_claim": "historical writing example; not verified current facts or conversion data"
+    }
+  ]
+}
