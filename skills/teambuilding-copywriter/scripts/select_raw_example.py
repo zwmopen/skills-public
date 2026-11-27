@@ -55,7 +55,7 @@ def approved(entry, platform):
             and entry.get("platform_hint") == platform
             and bool(entry.get("style_cluster"))
             and bool(entry.get("source_group"))
-            and entry.get("rights_status") in ("authorized", "owned", "permitted_private_reference"))
+            and entry.get("rights_status") in ("authorized", "owned"))
 
 def assignment(pools, recent, entries, fingerprints):
     rng = secrets.SystemRandom()
@@ -102,7 +102,6 @@ def main():
     p.add_argument("--request", type=Path, required=True)
     p.add_argument("--index", type=Path, action="append", help="Custom index; repeat to combine. Defaults to the two platform pools.")
     p.add_argument("--root", type=Path, default=ROOT)
-    p.add_argument("--private-root", type=Path, action="append", help="Authorized private library root with index.json; repeat if needed. Also reads TEAMBUILDING_PRIVATE_ROOT.")
     p.add_argument("--history", type=Path, default=DEFAULT_HISTORY)
     p.add_argument("--avoid-recent", type=int, default=10)
     p.add_argument("--dry-run", action="store_true")
@@ -110,18 +109,7 @@ def main():
     if args.avoid_recent < 0:
         p.error("--avoid-recent must be nonnegative")
     index_paths = args.index or DEFAULT_INDEXES
-    private_roots = args.private_root or []
-    configured = os.environ.get("TEAMBUILDING_PRIVATE_ROOT")
-    if configured:
-        private_roots = private_roots + [Path(configured)]
-    libraries = [(path, args.root) for path in index_paths]
-    libraries += [(root / "index.json", root) for root in dict.fromkeys(private_roots)]
-    entries = []
-    roots_by_id = {}
-    for path, root in libraries:
-        for entry in read_json(path)["entries"]:
-            entries.append(entry)
-            roots_by_id[entry["id"]] = root
+    entries = [entry for path in index_paths for entry in read_json(path)["entries"]]
     by_id = {e["id"]: e for e in entries}
     if len(by_id) != len(entries):
         p.error("Duplicate example IDs")
@@ -147,7 +135,7 @@ def main():
                 continue
             try:
                 if eid not in bodies:
-                    bodies[eid] = read_example(e, roots_by_id[eid])
+                    bodies[eid] = read_example(e, args.root)
                     fingerprints[eid] = normalized_fingerprint(bodies[eid])
                 if prose_count(bodies[eid]) > 0:
                     pool.append(eid)
