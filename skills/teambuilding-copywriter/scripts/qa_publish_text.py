@@ -67,6 +67,20 @@ EVIDENCE_REVIEW = re.compile(
 )
 
 
+# User rejected these repeated filler constructions in the Tonglu test.
+# This is an editorial warning gate, not an AI-authorship classifier.
+AI_FILLER = {
+    "everyone_same": re.compile(r"(?:不必|不用|没必要|不需要|不强求)(?:让|要求)?所有人(?:都|全程)?|不(?:用|必|需要|强求)全员(?:都|统一|全程)"),
+    "fill_schedule": re.compile(r"(?:不用|不必|没必要|不需要|别|不要)(?:把)?(?:所有|全部|每样|每个|一天)?[^。！？\n]{0,12}(?:塞满|都安排|全部安排|都塞进去)|(?:不用|不必|没必要)全部(?:都)?(?:安排|塞满|体验)"),
+    "lively_quiet": re.compile(r"想(?:热闹|动|安静|放松|歇|慢下来)[^。！？\n]{0,28}[，；、：][^。！？\n]{0,12}想(?:热闹|动|安静|放松|歇|慢下来)"),
+    "not_more_better": re.compile(r"(?:项目|玩法|活动|体验)(?:数量)?(?:并)?不(?:是|一定)越多越好"),
+    "rhythm_cliche": re.compile(r"(?:把|让)(?:整个|活动|一天的|一天|下午的)?节奏(?:慢慢)?(?:收回来|放慢|降下来)|给不同(?:体力|偏好|兴趣)[^。！？\n]{0,12}留(?:出|点)?(?:选择|空间)"),
+}
+
+def editorial_patterns(prose: str) -> dict:
+    return {key: len(rx.findall(prose)) for key, rx in AI_FILLER.items() if rx.search(prose)}
+
+
 def extract(content: str) -> list[tuple[str, str]]:
     blocks = MARKED_VERSION.findall(content)
     if blocks:
@@ -78,6 +92,7 @@ def extract(content: str) -> list[tuple[str, str]]:
 
 def check(text: str) -> dict:
     records = []
+    pattern_records = []
     for name, body in extract(text):
         errors = []
         for token in LEAK_TERMS:
@@ -106,6 +121,12 @@ def check(text: str) -> dict:
         if len(title) > 20 and "小红书" in name:
             errors.append(f"FAIL_XHS_TITLE_LENGTH: {len(title)} code points")
         warnings = []
+        patterns = editorial_patterns(prose)
+        pattern_records.append(patterns)
+        for key, count in patterns.items():
+            warnings.append(f"REVIEW_AI_FILLER: {key} ({count}); delete generic filler or justify concrete reader value")
+        if sum(patterns.values()) >= 2:
+            errors.append("FAIL_REPEATED_FILLER: multiple stock constructions in one draft")
         if is_commercial_cta:
             warnings.append(
                 "REVIEW_BUSINESS_QUALIFICATION: confirm industry permissions, commercial disclosure and permitted contact routes before publishing"
@@ -121,8 +142,16 @@ def check(text: str) -> dict:
             "version": name, "title": title, "accepted": not errors,
             "errors": errors, "warnings": warnings,
         })
+    repeated = sorted(key for key in AI_FILLER if sum(key in p for p in pattern_records) >= 2)
+    if repeated:
+        for record, patterns in zip(records, pattern_records):
+            for key in repeated:
+                if key in patterns:
+                    record["errors"].append(f"FAIL_BATCH_STYLE_REPETITION: {key}")
+            record["accepted"] = not record["errors"]
     return {
         "accepted": all(x["accepted"] for x in records),
+        "repeated_pattern_families": repeated,
         "versions": records,
         "scope": "textual term/style checks only; not fact or platform validation",
     }
