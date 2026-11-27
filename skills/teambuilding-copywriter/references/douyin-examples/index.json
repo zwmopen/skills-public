@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "platform": "douyin",
-  "description": "正式approved与用户授权trial分开；trial可试选抽象写法，逐条核对中，不代表质量、平台来源或版权已验证。",
+  "description": "2026-11-27.9：approved/regular trial为常规可选；restricted trial仅明确题材适配且常规池不足时可选；rejected保留审核记录、不得选模。权属及运营表现未核实不冒称已核实。",
   "entries": [
     {
       "id": "G002",
@@ -28,7 +28,14 @@
       },
       "style_cluster": "dense_timed_itinerary",
       "source_group": "historical_finished_unknown_authors",
-      "rights_status": "unverified"
+      "rights_status": "unverified",
+      "selection_tier": "regular",
+      "user_review": {
+        "decision": "retain",
+        "reviewer": "user (confirmed batch editorial recommendations)",
+        "date": "2026-11-27",
+        "note": "自然叙事与具体路线"
+      }
     },
     {
       "id": "G004",
@@ -55,7 +62,14 @@
       },
       "style_cluster": "destination_comparison",
       "source_group": "historical_finished_unknown_authors",
-      "rights_status": "unverified"
+      "rights_status": "unverified",
+      "selection_tier": "regular",
+      "user_review": {
+        "decision": "retain",
+        "reviewer": "user (confirmed batch editorial recommendations)",
+        "date": "2026-11-27",
+        "note": "多目的地分类推荐"
+      }
     },
     {
       "id": "G006",
@@ -82,7 +96,14 @@
       },
       "style_cluster": "destination_comparison",
       "source_group": "historical_finished_unknown_authors",
-      "rights_status": "unverified"
+      "rights_status": "unverified",
+      "selection_tier": "regular",
+      "user_review": {
+        "decision": "retain",
+        "reviewer": "user (confirmed batch editorial recommendations)",
+        "date": "2026-11-27",
+        "note": "紧凑清单与快速扫读"
+      }
     },
     {
       "id": "G008",
@@ -93,15 +114,17 @@
       "platform_hint": "douyin",
       "kind": "historical_finished_example",
       "format_quality": "linebreaks_present",
-      "status": "trial",
+      "status": "rejected",
       "topic_hint": "范例 4｜临安大明山秋日轻户外（半天/一天分档大纲 × 单场地慢节奏抖音）",
       "source_claim": "historical writing example; not verified current facts or conversion data",
       "quality_review": {
-        "decision": "pending",
-        "reason": "历史成稿/采集样本尚未通过V3.3质量门，待复核"
+        "decision": "fail",
+        "reviewer": "ChatGPT editorial review; user confirmed",
+        "date": "2026-11-27",
+        "reason": "地点独特性不足，慢游套话过多"
       },
       "trial_use": {
-        "enabled": true,
+        "enabled": false,
         "authorized_by": "user",
         "date": "2026-11-27",
         "scope": "existing corpus, abstract writing structure only; pending individual review",
@@ -109,7 +132,18 @@
       },
       "style_cluster": "duration_choice",
       "source_group": "historical_finished_unknown_authors",
-      "rights_status": "unverified"
+      "rights_status": "unverified",
+      "selection_tier": "excluded",
+      "user_review": {
+        "decision": "reject",
+        "reviewer": "user (confirmed batch editorial recommendations)",
+        "date": "2026-11-27",
+        "note": "地点独特性不足，慢游套话过多"
+      },
+      "prior_quality_review": {
+        "decision": "pending",
+        "reason": "历史成稿/采集样本尚未通过V3.3质量门，待复核"
+      }
     },
     {
       "id": "G010",
@@ -120,15 +154,17 @@
       "platform_hint": "douyin",
       "kind": "historical_finished_example",
       "format_quality": "linebreaks_present",
-      "status": "trial",
+      "status": "rejected",
       "topic_hint": "范例 5｜杭州西湖秋日按参与度选（红书大纲完整收藏版标杆 × 单场地抖音）",
       "source_claim": "historical writing example; not verified current facts or conversion data",
       "quality_review": {
-        "decision": "pending",
-        "reason": "桐庐试稿暴露相近的偏好分流、慢节奏和总结句式，暂停作为默认母版，待复核"
+        "decision": "fail",
+        "reviewer": "ChatGPT editorial review; user confirmed",
+        "date": "2026-11-27",
+        "reason": "泛化分流及重复总结，具体信息不足"
       },
       "trial_use": {
-        "enabled": true,
+        "enabled": false,
         "authorized_by": "user",
         "date": "2026-11-27",
         "scope": "existing corpus, abstract writing structure only; pending individual review",
@@ -136,7 +172,18 @@
       },
       "style_cluster": "participation_choice",
       "source_group": "historical_finished_unknown_authors",
-      "rights_status": "unverified"
+      "rights_status": "unverified",
+      "selection_tier": "excluded",
+      "user_review": {
+        "decision": "reject",
+        "reviewer": "user (confirmed batch editorial recommendations)",
+        "date": "2026-11-27",
+        "note": "泛化分流及重复总结，具体信息不足"
+      },
+      "prior_quality_review": {
+        "decision": "pending",
+        "reason": "桐庐试稿暴露相近的偏好分流、慢节奏和总结句式，暂停作为默认母版，待复核"
+      }
     },
     {
       "id": "G012",
@@ -163,7 +210,19 @@
       },
       "style_cluster": "daypart_sequence",
       "source_group": "historical_finished_unknown_authors",
-      "rights_status": "unverified"
+      "rights_status": "unverified",
+      "selection_tier": "restricted",
+      "user_review": {
+        "decision": "restrict",
+        "reviewer": "user (confirmed batch editorial recommendations)",
+        "date": "2026-11-27",
+        "note": "仅适用有充分具体体验的一日生活分享；学习时间线，不继承慢节奏总结"
+      },
+      "restricted_use": {
+        "condition": "仅适用有充分具体体验的一日生活分享；学习时间线，不继承慢节奏总结",
+        "requires_explicit_fit_reason": true,
+        "fallback_only": true
+      }
     },
     {
       "id": "G015",
@@ -174,15 +233,17 @@
       "platform_hint": "douyin",
       "kind": "historical_finished_example",
       "format_quality": "linebreaks_present",
-      "status": "trial",
+      "status": "rejected",
       "topic_hint": "范例 9｜趣味运动会选型（活动模块拆解 + 容差机制与HR决策巅峰典范）",
       "source_claim": "historical writing example; not verified current facts or conversion data",
       "quality_review": {
-        "decision": "pending",
-        "reason": "历史成稿/采集样本尚未通过V3.3质量门，待复核"
+        "decision": "fail",
+        "reviewer": "ChatGPT editorial review; user confirmed",
+        "date": "2026-11-27",
+        "reason": "游戏机制不足，安全培训腔，与G014高度同质"
       },
       "trial_use": {
-        "enabled": true,
+        "enabled": false,
         "authorized_by": "user",
         "date": "2026-11-27",
         "scope": "existing corpus, abstract writing structure only; pending individual review",
@@ -190,7 +251,18 @@
       },
       "style_cluster": "game_explanation",
       "source_group": "historical_finished_unknown_authors",
-      "rights_status": "unverified"
+      "rights_status": "unverified",
+      "selection_tier": "excluded",
+      "user_review": {
+        "decision": "reject",
+        "reviewer": "user (confirmed batch editorial recommendations)",
+        "date": "2026-11-27",
+        "note": "游戏机制不足，安全培训腔，与G014高度同质"
+      },
+      "prior_quality_review": {
+        "decision": "pending",
+        "reason": "历史成稿/采集样本尚未通过V3.3质量门，待复核"
+      }
     }
   ]
 }
