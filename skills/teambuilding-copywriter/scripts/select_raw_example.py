@@ -13,7 +13,8 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_INDEX = ROOT / "references/raw-example-index-v1.json"
+DEFAULT_INDEXES = [ROOT / "references/xiaohongshu-examples/index.json",
+                   ROOT / "references/douyin-examples/index.json"]
 DEFAULT_HISTORY = ROOT / ".cache/raw-example-history-v1.json"
 
 def read_json(path):
@@ -71,7 +72,7 @@ def atomic_json(path, data):
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--request", type=Path, required=True)
-    p.add_argument("--index", type=Path, default=DEFAULT_INDEX)
+    p.add_argument("--index", type=Path, action="append", help="Custom index; repeat to combine. Defaults to the two platform pools.")
     p.add_argument("--root", type=Path, default=ROOT)
     p.add_argument("--history", type=Path, default=DEFAULT_HISTORY)
     p.add_argument("--avoid-recent", type=int, default=10)
@@ -79,7 +80,8 @@ def main():
     args = p.parse_args()
     if args.avoid_recent < 0:
         p.error("--avoid-recent must be nonnegative")
-    entries = read_json(args.index)["entries"]
+    index_paths = args.index or DEFAULT_INDEXES
+    entries = [entry for path in index_paths for entry in read_json(path)["entries"]]
     by_id = {e["id"]: e for e in entries}
     if len(by_id) != len(entries):
         p.error("Duplicate example IDs")
