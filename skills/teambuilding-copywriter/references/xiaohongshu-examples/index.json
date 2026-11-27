@@ -91,7 +91,13 @@
       },
       "style_cluster": "dense_destination_activity_menu",
       "source_group": "historical_raw_unknown_authors",
-      "rights_status": "unverified"
+      "rights_status": "unverified",
+      "user_review": {
+        "decision": "retain",
+        "reviewer": "user",
+        "date": "2026-11-27",
+        "note": "用户明确保留写法；继续可用，未核实原始平台、权属及运营表现。"
+      }
     },
     {
       "id": "R091",
