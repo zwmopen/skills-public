@@ -250,6 +250,34 @@
         "decision": "pending",
         "reason": "历史成稿/采集样本尚未通过V3.3质量门，待复核"
       }
+    },
+    {
+      "id": "XHS-20261127-001",
+      "source": "references/xiaohongshu-examples/raw/XHS-20261127-001.txt",
+      "start_line": 1,
+      "end_line": 65,
+      "title": "千岛湖冬季团建❗️2天1夜🔥人均500+",
+      "platform_hint": "xiaohongshu",
+      "original_platform": "unverified; assigned to Xiaohongshu writing pool based on format",
+      "kind": "user_supplied_full_reference",
+      "format_quality": "linebreaks_present",
+      "status": "approved",
+      "rights_status": "authorized",
+      "rights_note": "User supplied the full text and explicitly requested publication in the single shared repository on 2026-11-27. Original authorship and third-party licensing are not independently verified; no downstream license asserted.",
+      "source_group": "unknown_user_supplied_XHS_20261127_001",
+      "style_cluster": "dense_seasonal_itinerary_villa_food_destination",
+      "quality_review": {
+        "decision": "pass",
+        "reviewer": "ChatGPT editorial review; user explicitly selected this case",
+        "reason": "Complete title/body/tags and distinct dense long-form seasonal itinerary, villa equipment, destination, food and activity sections; not an endorsement of factual or marketing claims. Original account and performance unverified.",
+        "date": "2026-11-27"
+      },
+      "risk_notes": [
+        "价格、人数、车程、私汤是否为温泉、场地设施、烟花许可、承接权益及CTA均不能从原文转移为新稿事实",
+        "不复制独特原句；标题学习信息结构和符号节奏，数字只来自当轮核实素材",
+        "商业身份及资质须独立审查"
+      ],
+      "source_claim": "User-provided original text, no URL or metrics supplied"
     }
   ]
 }
