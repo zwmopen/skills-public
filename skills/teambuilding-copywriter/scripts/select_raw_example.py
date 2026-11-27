@@ -2,6 +2,8 @@
 """Select one complete writing reference per slot, never infer facts from references.
 Input JSON: {"slots":[{"id":"xhs1","platform":"xiaohongshu","eligible_ids":["R001","G001"]}, ...]}.
 Eligibility is determined by the caller from current verified facts and index hints.
+Restricted fallback: each slot may supply restricted_reasons: {"example_id":"specific topic fit reason"}.
+Restricted IDs must also be in eligible_ids. Regular candidates are exhausted first.
 This tool selects and reads full text; it does not certify rights, suitability or publication.
 """
 from __future__ import annotations
@@ -49,6 +51,7 @@ def prose_count(body):
 def approved(entry, platform):
     q = entry.get("quality_review", {})
     return (entry.get("status") == "approved"
+            and entry.get("selection_tier", "regular") == "regular"
             and q.get("decision") == "pass"
             and bool(q.get("reviewer")) and bool(q.get("reason"))
             and entry.get("format_quality") == "linebreaks_present"
@@ -57,9 +60,12 @@ def approved(entry, platform):
             and bool(entry.get("source_group"))
             and entry.get("rights_status") in ("authorized", "owned"))
 
-def trial_eligible(entry, platform):
+def trial_eligible(entry, platform, restricted_reasons=None):
     t = entry.get("trial_use", {})
-    return (entry.get("status") == "trial"
+    tier = entry.get("selection_tier", "regular")
+    reason = (restricted_reasons or {}).get(entry["id"])
+    tier_ok = tier == "regular" or (tier == "restricted" and isinstance(reason, str) and bool(reason.strip()))
+    return (tier_ok and entry.get("status") == "trial"
             and t.get("enabled") is True
             and t.get("authorized_by") == "user"
             and t.get("platform_pool") == platform
@@ -67,7 +73,7 @@ def trial_eligible(entry, platform):
             and bool(entry.get("style_cluster"))
             and bool(entry.get("source_group")))
 
-def assignment(pools, recent, entries, fingerprints):
+def assignment(pools, recent, entries, fingerprints, max_restricted=0):
     rng = secrets.SystemRandom()
     order = sorted(pools, key=lambda slot: len(pools[slot]))
     def search(i, used, result, exclude_recent, strict_source):
@@ -76,12 +82,13 @@ def assignment(pools, recent, entries, fingerprints):
         slot = order[i]
         options = [v for v in pools[slot]
                    if v not in used and (not exclude_recent or v not in recent)
+                   and (entries[v].get("selection_tier") != "restricted" or sum(entries[u].get("selection_tier") == "restricted" for u in used) < max_restricted)
                    and all(fingerprints[v] != fingerprints[u] for u in used)
                    and all(entries[v]["style_cluster"] != entries[u]["style_cluster"] for u in used)
                    and (not strict_source or all(entries[v]["source_group"] != entries[u]["source_group"] for u in used))]
         rng.shuffle(options)
         # Preserve randomness within groups while preferring fresh candidates.
-        options.sort(key=lambda v: (entries[v].get('status') != 'approved', v in recent))
+        options.sort(key=lambda v: (entries[v].get('selection_tier') == 'restricted', entries[v].get('status') != 'approved', v in recent))
         for v in options:
             result[slot] = v
             found = search(i + 1, used | {v}, result, exclude_recent, strict_source)
@@ -138,10 +145,13 @@ def main():
         ids = slot["eligible_ids"]
         if not isinstance(ids, list):
             p.error("eligible_ids must be an array")
+        restricted_reasons = slot.get("restricted_reasons", {})
+        if not isinstance(restricted_reasons, dict) or not all(isinstance(k, str) and isinstance(v, str) and v.strip() for k, v in restricted_reasons.items()):
+            p.error("restricted_reasons must map IDs to nonempty topic-fit explanations")
         pool = []
         for eid in dict.fromkeys(ids):
             e = by_id.get(eid)
-            if not e or not (approved(e, platform) or trial_eligible(e, platform)):
+            if not e or not (approved(e, platform) or trial_eligible(e, platform, restricted_reasons)):
                 continue
             try:
                 if eid not in bodies:
@@ -159,11 +169,17 @@ def main():
     approved_pools = {k: [v for v in vs if by_id[v].get('status') == 'approved'] for k, vs in pools.items()}
     chosen, relaxed, source_relaxed = assignment(approved_pools, recent, by_id, fingerprints)
     if chosen is None:
-        chosen, relaxed, source_relaxed = assignment(pools, recent, by_id, fingerprints)
+        regular_pools = {k: [v for v in vs if by_id[v].get("selection_tier") != "restricted"] for k, vs in pools.items()}
+        chosen, relaxed, source_relaxed = assignment(regular_pools, recent, by_id, fingerprints)
+    if chosen is None:
+        for limit in range(1, len(slots) + 1):
+            chosen, relaxed, source_relaxed = assignment(pools, recent, by_id, fingerprints, max_restricted=limit)
+            if chosen is not None:
+                break
     if chosen is None:
         print(json.dumps({"status":"insufficient_eligible_diverse_examples","candidate_counts":{k:len(v) for k,v in pools.items()},"errors":errors}, ensure_ascii=False))
         return 2
-    selected = [{"slot_id":s["id"],"example_id":chosen[s["id"]],"reference_status":by_id[chosen[s["id"]]]["status"],"rights_status":by_id[chosen[s["id"]]].get("rights_status","unverified"),"source":by_id[chosen[s["id"]]]["source"],"start_line":by_id[chosen[s["id"]]]["start_line"],"end_line":by_id[chosen[s["id"]]]["end_line"],"format_quality":by_id[chosen[s["id"]]]["format_quality"],"style_cluster":by_id[chosen[s["id"]]]["style_cluster"],"source_group":by_id[chosen[s["id"]]]["source_group"],"reference_prose_chars":prose_count(bodies[chosen[s["id"]]]),"raw_text":bodies[chosen[s["id"]]]} for s in slots]
+    selected = [{"slot_id":s["id"],"example_id":chosen[s["id"]],"reference_status":by_id[chosen[s["id"]]]["status"],"selection_tier":by_id[chosen[s["id"]]].get("selection_tier","regular"),"restricted_fit_reason":s.get("restricted_reasons",{}).get(chosen[s["id"]]) if by_id[chosen[s["id"]]].get("selection_tier")=="restricted" else None,"rights_status":by_id[chosen[s["id"]]].get("rights_status","unverified"),"source":by_id[chosen[s["id"]]]["source"],"start_line":by_id[chosen[s["id"]]]["start_line"],"end_line":by_id[chosen[s["id"]]]["end_line"],"format_quality":by_id[chosen[s["id"]]]["format_quality"],"style_cluster":by_id[chosen[s["id"]]]["style_cluster"],"source_group":by_id[chosen[s["id"]]]["source_group"],"reference_prose_chars":prose_count(bodies[chosen[s["id"]]]),"raw_text":bodies[chosen[s["id"]]]} for s in slots]
     if not args.dry_run:
         atomic_json(args.history, (history + [e["example_id"] for e in selected])[-300:])
     print(json.dumps({"status":"ok","history_updated":not args.dry_run,"recent_exclusion_relaxed":relaxed,"source_diversity_relaxed":source_relaxed,"reused_recent_ids":[e["example_id"] for e in selected if e["example_id"] in recent],"selected":selected,"errors":errors}, ensure_ascii=False, indent=2))
