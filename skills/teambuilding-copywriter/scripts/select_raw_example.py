@@ -57,6 +57,16 @@ def approved(entry, platform):
             and bool(entry.get("source_group"))
             and entry.get("rights_status") in ("authorized", "owned"))
 
+def trial_eligible(entry, platform):
+    t = entry.get("trial_use", {})
+    return (entry.get("status") == "trial"
+            and t.get("enabled") is True
+            and t.get("authorized_by") == "user"
+            and t.get("platform_pool") == platform
+            and entry.get("format_quality") == "linebreaks_present"
+            and bool(entry.get("style_cluster"))
+            and bool(entry.get("source_group")))
+
 def assignment(pools, recent, entries, fingerprints):
     rng = secrets.SystemRandom()
     order = sorted(pools, key=lambda slot: len(pools[slot]))
@@ -71,7 +81,7 @@ def assignment(pools, recent, entries, fingerprints):
                    and (not strict_source or all(entries[v]["source_group"] != entries[u]["source_group"] for u in used))]
         rng.shuffle(options)
         # Preserve randomness within groups while preferring fresh candidates.
-        options.sort(key=lambda v: v in recent)
+        options.sort(key=lambda v: (entries[v].get('status') != 'approved', v in recent))
         for v in options:
             result[slot] = v
             found = search(i + 1, used | {v}, result, exclude_recent, strict_source)
@@ -131,7 +141,7 @@ def main():
         pool = []
         for eid in dict.fromkeys(ids):
             e = by_id.get(eid)
-            if not e or not approved(e, platform):
+            if not e or not (approved(e, platform) or trial_eligible(e, platform)):
                 continue
             try:
                 if eid not in bodies:
@@ -146,11 +156,14 @@ def main():
     if not isinstance(history, list) or not all(isinstance(x, str) for x in history):
         p.error("Invalid history; repair rather than silently discard")
     recent = set(history[-args.avoid_recent:]) if args.avoid_recent else set()
-    chosen, relaxed, source_relaxed = assignment(pools, recent, by_id, fingerprints)
+    approved_pools = {k: [v for v in vs if by_id[v].get('status') == 'approved'] for k, vs in pools.items()}
+    chosen, relaxed, source_relaxed = assignment(approved_pools, recent, by_id, fingerprints)
     if chosen is None:
-        print(json.dumps({"status":"insufficient_approved_diverse_examples","candidate_counts":{k:len(v) for k,v in pools.items()},"errors":errors}, ensure_ascii=False))
+        chosen, relaxed, source_relaxed = assignment(pools, recent, by_id, fingerprints)
+    if chosen is None:
+        print(json.dumps({"status":"insufficient_eligible_diverse_examples","candidate_counts":{k:len(v) for k,v in pools.items()},"errors":errors}, ensure_ascii=False))
         return 2
-    selected = [{"slot_id":s["id"],"example_id":chosen[s["id"]],"source":by_id[chosen[s["id"]]]["source"],"start_line":by_id[chosen[s["id"]]]["start_line"],"end_line":by_id[chosen[s["id"]]]["end_line"],"format_quality":by_id[chosen[s["id"]]]["format_quality"],"style_cluster":by_id[chosen[s["id"]]]["style_cluster"],"source_group":by_id[chosen[s["id"]]]["source_group"],"reference_prose_chars":prose_count(bodies[chosen[s["id"]]]),"raw_text":bodies[chosen[s["id"]]]} for s in slots]
+    selected = [{"slot_id":s["id"],"example_id":chosen[s["id"]],"reference_status":by_id[chosen[s["id"]]]["status"],"rights_status":by_id[chosen[s["id"]]].get("rights_status","unverified"),"source":by_id[chosen[s["id"]]]["source"],"start_line":by_id[chosen[s["id"]]]["start_line"],"end_line":by_id[chosen[s["id"]]]["end_line"],"format_quality":by_id[chosen[s["id"]]]["format_quality"],"style_cluster":by_id[chosen[s["id"]]]["style_cluster"],"source_group":by_id[chosen[s["id"]]]["source_group"],"reference_prose_chars":prose_count(bodies[chosen[s["id"]]]),"raw_text":bodies[chosen[s["id"]]]} for s in slots]
     if not args.dry_run:
         atomic_json(args.history, (history + [e["example_id"] for e in selected])[-300:])
     print(json.dumps({"status":"ok","history_updated":not args.dry_run,"recent_exclusion_relaxed":relaxed,"source_diversity_relaxed":source_relaxed,"reused_recent_ids":[e["example_id"] for e in selected if e["example_id"] in recent],"selected":selected,"errors":errors}, ensure_ascii=False, indent=2))
